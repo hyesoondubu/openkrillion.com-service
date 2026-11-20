@@ -47,17 +47,14 @@ test('reference import validates date, question identity and tier whitelist',()=
   assert.throws(()=>validateReference(today,{...reveal,date:'2026-10-18'},date));
   reveal.prompts[0].text='Different question';assert.throws(()=>validateReference(today,reveal,date));
 });
-test('seven rounds are scored on server; retries cannot duplicate points; other browsers cannot read the run',async()=>{
+test('the personalized one-question round scores its alias at 100 points and cannot be replayed for duplicate points',async()=>{
   const s=service();let{body:game}=await s.call('/api/start',{});const id=game.runId;
   const correction=await s.call('/api/answer',{runId:id,round:0,answer:'mashed'});assert.equal(correction.body.correction,'Mashed potatoes');
   const rejected=await s.call('/api/answer',{runId:id,round:0,answer:'zzzzzzzzzz'});assert.equal(rejected.body.rejected,true);
-  for(let i=0;i<7;i++){
-    const answer=DEMO.prompts[i].answers.find(a=>a.tier==='krillion').answer;
-    const result=await s.call('/api/answer',{runId:id,round:i,answer,confirm:true,score:99999});assert.equal(result.status,200);assert.equal(result.body.result.score,TIERS.krillion.score);game=result.body.state;
-    const duplicate=await s.call('/api/answer',{runId:id,round:i,answer});assert.equal(duplicate.body.alreadyScored,true);assert.equal(duplicate.body.state.results.length,i+1);
-    if(i<6){const n=await s.call('/api/next',{runId:id});assert.equal(n.body.round,i+1);}
-  }
-  assert.equal(game.score,700);assert.equal(game.completed,true);
+  const answer=DEMO.prompts[0].answers[0].aliases[0];
+  const result=await s.call('/api/answer',{runId:id,round:0,answer,confirm:true,score:99999});assert.equal(result.status,200);assert.equal(result.body.result.score,TIERS.krillion.score);game=result.body.state;
+  const duplicate=await s.call('/api/answer',{runId:id,round:0,answer});assert.equal(duplicate.body.alreadyScored,true);assert.equal(duplicate.body.state.results.length,1);
+  assert.equal(game.score,100);assert.equal(game.completed,true);
   const same=await s.call('/api/start',{});assert.equal(same.body.runId,id);
   const review=await s.call('/api/review?run='+id);assert.equal(review.status,200);assert.equal(review.body.betterThan,null);assert.equal(review.body.population,0);
   const other=service();const missing=await other.call('/api/state?run='+id);assert.equal(missing.status,404);
