@@ -34,6 +34,8 @@ export async function syncPuzzle(env, date = etDate()) {
   return puzzle;
 }
 async function puzzleFor(env, date) {
+  // Keep this personalized round independent of the public daily reference feed.
+  return { ...DEMO, date, dayNumber: Math.floor((Date.parse(date) - Date.parse('2026-07-16')) / 86400000) + 1, sample: true };
   if (cache.has(date)) return cache.get(date);
   const row = await env.DB.prepare('SELECT content FROM puzzles WHERE date=?').bind(date).first();
   if (row) { const p = JSON.parse(row.content); cache.set(date, p); return p; }
@@ -137,7 +139,7 @@ async function api(request, env, url) {
     const now = Date.now();
     await env.DB.batch([
       env.DB.prepare('INSERT OR IGNORE INTO answers(run_id,round,raw_answer,answer,tier,score,created_at) SELECT id,?,?,?,?,?,? FROM runs WHERE id=? AND next_round=? AND round_start IS NOT NULL AND completed=0').bind(result.round,result.rawAnswer,result.answer,result.tier,result.score,now,run.id,result.round),
-      env.DB.prepare('UPDATE runs SET next_round=?,round_start=NULL,completed=? WHERE id=? AND next_round=? AND EXISTS(SELECT 1 FROM answers WHERE run_id=? AND round=?)').bind(result.round+1,result.round===6?1:0,run.id,result.round,run.id,result.round),
+      env.DB.prepare('UPDATE runs SET next_round=?,round_start=NULL,completed=? WHERE id=? AND next_round=? AND EXISTS(SELECT 1 FROM answers WHERE run_id=? AND round=?)').bind(result.round+1,result.round===puzzle.prompts.length-1?1:0,run.id,result.round,run.id,result.round),
     ]);
     const fresh = await state(env, await ownRun(env,run.id,player));
     const accepted = fresh.results.find(r => r.round === result.round);
