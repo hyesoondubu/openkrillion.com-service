@@ -35,7 +35,7 @@ export async function syncPuzzle(env, date = etDate()) {
 }
 async function puzzleFor(env, date) {
   // Keep this personalized round independent of the public daily reference feed.
-  return { ...DEMO, date, dayNumber: Math.floor((Date.parse(date) - Date.parse('2026-07-16')) / 86400000) + 1, sample: true };
+  return { ...DEMO, date, dayNumber: Math.floor((Date.parse(date) - Date.parse('2026-07-16')) / 86400000) + 1 };
 }
 async function saveSample(env, puzzle) {
   if (puzzle.sample) await env.DB.prepare('INSERT OR IGNORE INTO puzzles(date,day_number,source,content) VALUES(?,?,?,?)').bind(puzzle.date, puzzle.dayNumber, puzzle.source, JSON.stringify(puzzle)).run();
