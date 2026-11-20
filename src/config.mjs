@@ -1,6 +1,6 @@
 export const SITE = {
   name: 'OpenKrillion', origin: 'https://openkrillion.com',
-  repository: 'https://github.com/VulcanEon/openkrillion.com-service',
+  repository: 'https://github.com/hyesoondubu/openkrillion.com-service',
   description: 'Play Krillion online with OpenKrillion, an independent open-source daily trivia game. One prompt, 25 seconds, and a chance at a One in a Krillion answer.',
   title: 'Krillion Game — Play Free Daily Trivia | OpenKrillion',
   languages: ['en', 'zh'], gameplayLanguage: 'en',
