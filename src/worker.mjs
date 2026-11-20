@@ -36,13 +36,6 @@ export async function syncPuzzle(env, date = etDate()) {
 async function puzzleFor(env, date) {
   // Keep this personalized round independent of the public daily reference feed.
   return { ...DEMO, date, dayNumber: Math.floor((Date.parse(date) - Date.parse('2026-07-16')) / 86400000) + 1, sample: true };
-  if (cache.has(date)) return cache.get(date);
-  const row = await env.DB.prepare('SELECT content FROM puzzles WHERE date=?').bind(date).first();
-  if (row) { const p = JSON.parse(row.content); cache.set(date, p); return p; }
-  if (env.REFERENCE_SYNC === 'true' && date === etDate()) {
-    try { return await syncPuzzle(env, date); } catch (e) { console.warn('Puzzle synchronization failed:', e.message); }
-  }
-  return { ...DEMO, date, dayNumber: Math.floor((Date.parse(date) - Date.parse('2026-07-16')) / 86400000) + 1, sample: true };
 }
 async function saveSample(env, puzzle) {
   if (puzzle.sample) await env.DB.prepare('INSERT OR IGNORE INTO puzzles(date,day_number,source,content) VALUES(?,?,?,?)').bind(puzzle.date, puzzle.dayNumber, puzzle.source, JSON.stringify(puzzle)).run();
