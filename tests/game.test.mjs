@@ -36,20 +36,20 @@ test('New York reset follows DST rather than device midnight',()=>{
 });
 test('answer matching normalizes accents, uses known aliases and avoids short fuzzy guesses',()=>{
   assert.equal(normalize('São Tomé & Príncipe'),'saotomeandprincipe');
-  assert.equal(matchAnswer('mashed',DEMO.prompts[0].answers).answer,'Mashed potatoes');
-  assert.equal(matchAnswer('Yttrum',DEMO.prompts[3].answers).correction,true);
-  assert.equal(matchAnswer('xyz',DEMO.prompts[3].answers),null);
-  assert.equal(matchAnswer('zzzzzzzzzz',DEMO.prompts[0].answers),null);
+  const accepted=DEMO.prompts[0].answers;
+  assert.equal(matchAnswer('Salt and light gathering',accepted).answer,'Salt & Light gathering');
+  assert.equal(matchAnswer('Salt & Light gathering',accepted).tier,'krillion');
+  assert.equal(matchAnswer('xyz',accepted),null);
+  assert.equal(matchAnswer('zzzzzzzzzz',accepted),null);
 });
 test('reference import validates date, question identity and tier whitelist',()=>{
-  const date='2026-10-17';const today={date,dayNumber:94,prompts:DEMO.prompts.map(({id,text})=>({id,text}))},reveal={date,prompts:structuredClone(DEMO.prompts)};
+  const date='2026-10-17';const prompts=Array.from({length:7},(_,i)=>({id:'p'+i,text:'Reference question '+i,answers:[{answer:'Answer '+i,tier:'krillion'}]}));const today={date,dayNumber:94,prompts:prompts.map(({id,text})=>({id,text}))},reveal={date,prompts:structuredClone(prompts)};
   assert.equal(validateReference(today,reveal,date).prompts.length,7);
   assert.throws(()=>validateReference(today,{...reveal,date:'2026-10-18'},date));
   reveal.prompts[0].text='Different question';assert.throws(()=>validateReference(today,reveal,date));
 });
 test('the personalized one-question round scores its alias at 100 points and cannot be replayed for duplicate points',async()=>{
   const s=service();let{body:game}=await s.call('/api/start',{});const id=game.runId;
-  const correction=await s.call('/api/answer',{runId:id,round:0,answer:'mashed'});assert.equal(correction.body.correction,'Mashed potatoes');
   const rejected=await s.call('/api/answer',{runId:id,round:0,answer:'zzzzzzzzzz'});assert.equal(rejected.body.rejected,true);
   const answer=DEMO.prompts[0].answers[0].aliases[0];
   const result=await s.call('/api/answer',{runId:id,round:0,answer,confirm:true,score:99999});assert.equal(result.status,200);assert.equal(result.body.result.score,TIERS.krillion.score);game=result.body.state;
